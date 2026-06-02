@@ -1,0 +1,77 @@
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.navbar {
+  height: 40px;
+  background-color: #202020;
+  color: white;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  -webkit-app-region: drag;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 500;
+}
+.nav-utilities {
+  display: flex;
+  justify-content: space-between;
+  background: transparent;
+  gap: 10px;
+}
+
+.close-btn {
+  width: 46px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  -webkit-app-region: no-drag;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  background-color: #e81123;
+}
+
+.fullscreen-btn {
+  width: 46px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  -webkit-app-region: no-drag;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+.fullscreen-btn:hover {
+  background-color: red;
+}
+
+.camera-img {
+  width: 120px;
+  height: 120px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.camera-img:hover {
+  transform: scale(1.1);
+}
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
