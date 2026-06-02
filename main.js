@@ -9,6 +9,7 @@ const {
   Menu,
   dialog,
   globalShortcut,
+  clipboard,
 } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
@@ -150,6 +151,9 @@ async function captureSelectedArea(window) {
     if (err) return console.error(err);
     shell.openExternal(`file://${filePath}`);
   });
+
+  // copy image to clipboard
+  clipboard.writeImage(croppedImage);
 }
 //is app ready and initialized ? show the app
 app.whenReady().then(() => {
