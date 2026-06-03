@@ -11,19 +11,69 @@
       <span class="title">Screen Record</span>
 
       <div class="nav-utilities">
+        <button id="settings-btn" class="settings-btn">
+          <svg
+            xmlns="http://w3.org"
+            viewBox="0 0 24 24"
+            width="24"
+            height="24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+            />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
         <button id="fullscreen-btn" class="fullscreen-btn">⛶</button>
-        
         <button id="close-btn" class="close-btn">✕</button>
       </div>
     </nav>
-    <div class="container">
-      <img
-        class="camera-img"
-        id="camera-btn"
-        src="./assets/camera.png"
-        alt="camera-image"
-      />
-    </div>
+    <main id="capture-view" class="view active">
+      <div class="container">
+        <img
+          class="camera-img"
+          id="camera-btn"
+          src="./assets/camera.png"
+          alt="camera-image"
+        />
+      </div>
+    </main>
+
+    <main id="settings-view" class="view">
+      <h2>Settings</h2>
+      <div class="settings-view-utilities">
+        <label>
+          <input type="checkbox" id="copy-to-clipboard" />
+          Copy screenshots to clipboard
+        </label>
+
+        <label>
+          <input type="checkbox" id="auto-open-screenshot" checked />
+          Open screenshot after saving
+        </label>
+        <label>
+          <input type="checkbox" id="capture-full-screen" />
+          Capture full screen
+        </label>
+
+        <label class="setting-field" for="screenshot-format">
+          <span>Image format</span>
+
+          <select id="screenshot-format" class="setting-select">
+            <option value="png" selected>PNG</option>
+            <option value="jpg">JPG</option>
+            <option value="webp">WebP</option>
+          </select>
+        </label>
+
+        <button class="done-btn" id="done-btn">Done</button>
+      </div>
+    </main>
 
     <script src="./renderer.js"></script>
   </body>

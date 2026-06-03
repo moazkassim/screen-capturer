@@ -14,9 +14,73 @@ const {
 const path = require("node:path");
 const fs = require("node:fs");
 const os = require("node:os");
-
 let isLargeWindow = false;
 
+// handling settings
+const settingsPath = path.join(app.getPath("userData"), "settings.json");
+const defaultSettings = {
+  copyToClipboard: false,
+  autoOpenScreenshot: true,
+  captureFullScreen: false,
+  screenshotFormat: "png",
+};
+let settings = { ...defaultSettings };
+function getImageBuffer(image) {
+  if (settings.screenshotFormat === "jpg") {
+    return image.toJPEG(90);
+  }
+
+  if (settings.screenshotFormat === "webp") {
+    return image.toPNG(); // Electron NativeImage does not support WebP export directly
+  }
+
+  return image.toPNG();
+}
+function getImageFilter() {
+  if (settings.screenshotFormat === "jpg") {
+    return {
+      name: "JPG Image",
+      extensions: ["jpg"],
+    };
+  }
+
+  if (settings.screenshotFormat === "webp") {
+    return {
+      name: "WEBP Image",
+      extensions: ["webp"],
+    };
+  }
+
+  return {
+    name: "PNG Image",
+    extensions: ["png"],
+  };
+}
+function loadSettings() {
+  try {
+    if (fs.existsSync(settingsPath)) {
+      const savedSettings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+      settings = { ...defaultSettings, ...savedSettings };
+    }
+  } catch (err) {
+    console.error("Failed to load settings:", err);
+  }
+}
+
+function saveSettings() {
+  try {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  } catch (err) {
+    console.error("Failed to save settings:", err);
+  }
+}
+ipcMain.on("update-setting", (event, { key, value }) => {
+  settings[key] = value;
+  saveSettings();
+});
+ipcMain.handle("get-settings", () => {
+  return settings;
+});
 // function for adding screen select area
 function createSelectionWindow() {
   const display = screen.getPrimaryDisplay();
@@ -42,40 +106,52 @@ function createSelectionWindow() {
 }
 
 // function for capturing screen
-// async function captureScreen(window) {
-//   window.hide();
-//   // Give Windows/Electron a moment to actually hide the app before capture
-//   await new Promise((resolve) => setTimeout(resolve, 200));
-//   const screenSize = screen.getPrimaryDisplay().workAreaSize;
-//   const screens = await desktopCapturer.getSources({
-//     types: ["screen"],
-//     thumbnailSize: {
-//       width: screenSize.width,
-//       height: screenSize.height,
-//     },
-//   });
-//   const img = screens[0].thumbnail.toPNG();
-//   //create save location fo screenshot
-//   const result = await dialog.showOpenDialog(window, {
-//     title: "Choose screenshot folder",
-//     defaultPath: os.homedir(),
-//     properties: ["openDirectory"],
-//   });
+async function captureFullScreen(window) {
+  window.hide();
+  // Give Windows/Electron a moment to actually hide the app before capture
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  const screenSize = screen.getPrimaryDisplay().workAreaSize;
+  const screens = await desktopCapturer.getSources({
+    types: ["screen"],
+    thumbnailSize: {
+      width: screenSize.width,
+      height: screenSize.height,
+    },
+  });
+  const img = screens[0].thumbnail.toPNG();
+  //create save location fo screenshot
+  //choose file name and path
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const defaultFileName = `screenshot-${timestamp}.${settings.screenshotFormat}`;
+  const defaultFolder = app.getPath("pictures");
+  // let saveFolder;
 
-//   if (result.canceled || result.filePaths.length === 0) {
-//     window.show();
-//     return;
-//   }
+  const result = await dialog.showSaveDialog(window, {
+    title: "Save screenshot",
+    defaultPath: path.join(defaultFolder, defaultFileName),
+    filters: [getImageFilter()],
+  });
 
-//   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-//   const fileName = `screenshot-${timestamp}.png`;
-//   const filePath = path.join(result.filePaths[0], fileName);
+  if (result.canceled || !result.filePath) {
+    // window.show();
+    window.hide();
+    return;
+  }
+  const filePath = result.filePath;
 
-//   fs.writeFile(filePath, img, (err) => {
-//     if (err) return console.error(err);
-//     shell.openExternal(`file://${filePath}`);
-//   });
-// }
+  fs.writeFile(filePath, getImageBuffer(croppedImage), (err) => {
+    //window.show();
+    if (err) return console.error(err);
+    if (settings.autoOpenScreenshot) {
+      shell.openExternal(`file://${filePath}`);
+    }
+  });
+
+  // copy image to clipboard
+  if (settings.copyToClipboard) {
+    clipboard.writeImage(croppedImage);
+  }
+}
 
 async function captureSelectedArea(window) {
   window.hide();
@@ -124,19 +200,14 @@ async function captureSelectedArea(window) {
 
   //choose file name and path
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const defaultFileName = `screenshot-${timestamp}.png`;
+  const defaultFileName = `screenshot-${timestamp}.${settings.screenshotFormat.toLowerCase()}`;
   const defaultFolder = app.getPath("pictures");
   // let saveFolder;
 
   const result = await dialog.showSaveDialog(window, {
     title: "Save screenshot",
     defaultPath: path.join(defaultFolder, defaultFileName),
-    filters: [
-      {
-        name: "PNG Image",
-        extensions: ["png"],
-      },
-    ],
+    filters: [getImageFilter()],
   });
 
   if (result.canceled || !result.filePath) {
@@ -146,17 +217,23 @@ async function captureSelectedArea(window) {
   }
   const filePath = result.filePath;
 
-  fs.writeFile(filePath, croppedImage.toPNG(), (err) => {
+  fs.writeFile(filePath, getImageBuffer(croppedImage), (err) => {
     //window.show();
     if (err) return console.error(err);
-    shell.openExternal(`file://${filePath}`);
+    if (settings.autoOpenScreenshot) {
+      shell.openExternal(`file://${filePath}`);
+    }
   });
 
   // copy image to clipboard
-  clipboard.writeImage(croppedImage);
+  if (settings.copyToClipboard) {
+    clipboard.writeImage(croppedImage);
+  }
 }
+
 //is app ready and initialized ? show the app
 app.whenReady().then(() => {
+  loadSettings();
   const iconPath = path.join(__dirname, "assets", "camera.ico");
   const tray = new Tray(iconPath);
   const window = new BrowserWindow({
@@ -209,7 +286,11 @@ app.whenReady().then(() => {
   // clicking camera icon
 
   ipcMain.on("capturer-screen", async () => {
-    captureSelectedArea(window);
+    if (settings.captureFullScreen) {
+      captureFullScreen(window);
+    } else {
+      captureSelectedArea(window);
+    }
   });
   // creating keyboard shortcut
   const registered = globalShortcut.register("CommandOrControl+Shift+m", () => {
