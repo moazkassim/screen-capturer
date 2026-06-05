@@ -68,8 +68,8 @@ async function loadSettings() {
     settings.autoOpenScreenshot;
   document.getElementById("capture-full-screen").checked =
     settings.captureFullScreen;
-  document.getElementById("screenshot-format").checked =
-    settings.screenshotFormat;
+  document.getElementById("screenshot-format").value =
+    settings.screenshotFormat === "jpg" ? "jpg" : "png";
 }
 
 loadSettings();
